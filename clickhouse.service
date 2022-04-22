@@ -1,0 +1,15 @@
+docker service create \
+--name clickhouse \
+--hostname clickhouse \
+--replicas 1 \
+--publish published=8123,target=8123 \
+--publish published=9200,target=9000 \
+--ulimit nofile=262144:262144 \
+--constraint node.hostname!=dma-y \
+--mount type=bind,src=/swarm/volumes/clickhouse/log,dst=/var/log/clickhouse-server  \
+--mount type=bind,src=/swarm/volumes/clickhouse/data,dst=/var/lib/clickhouse  \
+--mount type=bind,src=/swarm/volumes/clickhouse/etc/users.xml,dst=/etc/clickhouse-server/users.xml  \
+--mount type=bind,src=/swarm/volumes/clickhouse/etc/config.xml,dst=/etc/clickhouse-server/config.xml  \
+--mount type=bind,src=/swarm/volumes/clickhouse/lib/format_schemas,dst=/var/lib/clickhouse/format_schemas  \
+--mount type=bind,src=/swarm/volumes/clickhouse/etc/config.d,dst=/etc/clickhouse-server/config.d  \
+yandex/clickhouse-server

@@ -1,0 +1,7 @@
+docker service create \
+--name prometheus \
+--replicas 2 \
+--constraint "node.hostname != dma-y" \
+--publish published=9999,target=9090 \
+--mount type=bind,src=/swarm/volumes/prometheus/prometheus.yml,dst=/etc/prometheus/prometheus.yml \
+prom/prometheus

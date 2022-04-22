@@ -1,0 +1,45 @@
+ #chown -R 472:472 /swarm/volumes/grafana-slave/
+version: '3.0'
+services:
+  grafana-slave:
+    image: grafana/grafana-enterprise:8.2.0
+    ports:
+      - 3101:3000
+    environment:        
+      GF_PATHS_CONFIG: /etc/grafana/grafana.ini
+      GF_PATHS_DATA: /var/lib/grafana
+      GF_PATHS_PLUGINS: /var/lib/grafana/plugins
+      GF_RENDERING_SERVER_URL: http://renderer:8081/render
+      GF_RENDERING_CALLBACK_URL: http://grafana-slave:3000/
+      GF_LOG_FILTERS: rendering:debug      
+      TZ: 'Europe/Moscow'
+    volumes:
+      - /swarm/volumes/grafana-slave/grafana.ini:/etc/grafana/grafana.ini
+      - /swarm/volumes/grafana-slave/config/dashboards:/var/lib/grafana/dashboards
+      - /swarm/volumes/grafana-slave/config/datasources:/etc/grafana/datasources
+      - /swarm/volumes/grafana-slave/config/plugins:/var/lib/grafana/plugins
+      - /swarm/volumes/grafana-slave/grafana_data:/var/lib/grafana     
+      - /swarm/volumes/grafana-slave/log:/var/log/grafana 
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+          - node.hostname != dma-y
+  renderer:
+    image: grafana/grafana-image-renderer:latest
+    ports:
+      - 8089:8081
+    environment:
+      ENABLE_METRICS: 'true'
+      RENDERING_MODE: clustered
+      RENDERING_CLUSTERING_MODE: context
+      RENDERING_CLUSTERING_MAX_CONCURRENCY: 3      
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+          - node.hostname != dma-y

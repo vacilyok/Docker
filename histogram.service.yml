@@ -1,0 +1,11 @@
+docker service create \
+--name histogram_collector \
+--replicas 1 \
+--env CLICKHOUSE_SRV='ip' \
+--env CLICKHOUSE_PORT='8123'  \
+--env CLICKHOUSE_DBNAME='histogram' \
+--env COUNT_INSERTROW='100000' \
+--env RABBITMQ_SRV='10.100.6.145' \
+--env RABBITMQ_PORT='55672' \
+--env RABBITMQ_QUEUE='histogram' \
+histogram_collector:latest

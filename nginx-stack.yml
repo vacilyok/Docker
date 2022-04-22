@@ -1,0 +1,75 @@
+chown -R 472:472 /swarm/volumes/nginx-stack/
+docker service create \
+--name nginx-balancer \
+--replicas 2 \
+--publish published=80,target=80 \
+--constraint node.hostname!=dma-y \
+--mount type=bind,src=/swarm/volumes/nginx-stack/html,dst=/usr/share/nginx/html  \
+--mount type=bind,src=/swarm/volumes/nginx-stack/nginx.conf,dst=/etc/nginx/nginx.conf \
+--mount type=bind,src=/swarm/volumes/nginx-stack/sites-available,dst=/etc/nginx/sites-available \
+--mount type=bind,src=/swarm/volumes/nginx-stack/sites-enabled,dst=/etc/nginx/sites-enabled \
+nginx
+
+
+
+
+
+
+version: '3.0'
+services:
+  eva02:
+    image: nginx
+    ports:
+      - 8090:80
+    environment:        
+      TZ: 'Europe/Moscow'
+    volumes:
+      - /swarm/volumes/nginx-stack/eva02/nginx.conf:/etc/nginx/nginx.conf
+      - /swarm/volumes/nginx-stack/eva02/html:/usr/share/nginx/html
+      - /swarm/volumes/nginx-stack/eva02/sites-available:/etc/nginx/sites-available
+      - /swarm/volumes/nginx-stack/eva02/conf.d:/etc/nginx/conf.d
+      - /swarm/volumes/nginx-stack/eva02/sites-enabled:/etc/nginx/sites-enabled
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == eva02
+  eva03:
+    image: nginx
+    ports:
+      - 8091:80
+    environment:        
+      TZ: 'Europe/Moscow'
+    volumes:
+      - /swarm/volumes/nginx-stack/eva03/nginx.conf:/etc/nginx/nginx.conf
+      - /swarm/volumes/nginx-stack/eva03/html:/usr/share/nginx/html
+      - /swarm/volumes/nginx-stack/eva03/sites-available:/etc/nginx/sites-available
+      - /swarm/volumes/nginx-stack/eva03/conf.d:/etc/nginx/conf.d
+      - /swarm/volumes/nginx-stack/eva03/sites-enabled:/etc/nginx/sites-enabled
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == eva03
+  eva04:
+    image: nginx
+    ports:
+      - 8092:80
+    environment:        
+      TZ: 'Europe/Moscow'
+    volumes:
+      - /swarm/volumes/nginx-stack/eva04/nginx.conf:/etc/nginx/nginx.conf
+      - /swarm/volumes/nginx-stack/eva04/html:/usr/share/nginx/html
+      - /swarm/volumes/nginx-stack/eva04/sites-available:/etc/nginx/sites-available
+      - /swarm/volumes/nginx-stack/eva04/conf.d:/etc/nginx/conf.d
+      - /swarm/volumes/nginx-stack/eva04/sites-enabled:/etc/nginx/sites-enabled
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == eva04
+
+

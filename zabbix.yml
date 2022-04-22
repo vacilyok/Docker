@@ -1,0 +1,103 @@
+version: '3.0'
+
+services:
+  mysql-server:
+    image: mysql:5.7
+    hostname: mysql-server
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8 --collation-server=utf8_general_ci
+    ports:
+      - 3306:3306
+    environment:  
+      - MYSQL_DATABASE=zabbix
+      - MYSQL_USER=uzabbix
+      - MYSQL_PASSWORD=zabpass
+      - MYSQL_ROOT_PASSWORD=rootpasswd      
+    volumes:
+      - /swarm/volumes/zabbix/mysql:/var/lib/mysql
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+          - node.hostname != dma-y
+
+  zabbix-server:
+    image: zabbix/zabbix-server-mysql:alpine-5.4-latest
+    hostname: zabbix-server
+    ports:
+      - 10052:10051
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro 
+      - /swarm/volumes/zabbix/alertscripts:/usr/lib/zabbix/alertscripts:ro
+      - /swarm/volumes/zabbix/externalscripts:/usr/lib/zabbix/externalscripts:ro
+      - /swarm/volumes/zabbix/export:/var/lib/zabbix/export:rw
+      - /swarm/volumes/zabbix/modules:/var/lib/zabbix/modules:ro
+      - /swarm/volumes/zabbix/enc:/var/lib/zabbix/enc:ro
+      - /swarm/volumes/zabbix/ssh_keys:/var/lib/zabbix/ssh_keys:ro
+      - /swarm/volumes/zabbix/mibs:/var/lib/zabbix/mibs:ro
+      - /swarm/volumes/zabbix/etc:/etc/zabbix
+    environment:
+      DB_SERVER_HOST: mysql-server
+      MYSQL_DATABASE: zabbix
+      MYSQL_USER: uzabbix
+      MYSQL_PASSWORD: zabpass
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+          - node.hostname != dma-y
+    depends_on:
+      - mysql-server
+
+  zabbixweb:
+    image: zabbix/zabbix-web-nginx-mysql:alpine-5.4-latest
+    ports:
+      - "85:8080"
+      - "8443:8443"      
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /swarm/volumes/zabbix/nginx:/etc/ssl/nginx:ro
+      - /swarm/volumes/zabbix/modules/:/usr/share/zabbix/modules/:ro
+    hostname: web
+    environment:
+      ZBX_SERVER_HOST: zabbix-server
+      #ZBX_SERVER_PORT: 10050
+      DB_SERVER_HOST: mysql-server
+      MYSQL_DATABASE: zabbix
+      MYSQL_USER: uzabbix
+      MYSQL_PASSWORD: zabpass
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+          - node.hostname != dma-y
+    depends_on:
+      - mysql-server
+
+  zabbix-agent:
+    image: zabbix/zabbix-agent:alpine-5.4-latest
+    deploy:
+      mode: global
+    hostname: zabbix-agent
+    ports:
+      - "10053:10050"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /swarm/volumes/zabbix/zabbix_agentd.d:/etc/zabbix/zabbix_agentd.d:ro
+      - /swarm/volumes/zabbix/modules:/var/lib/zabbix/modules:ro
+      - /swarm/volumes/zabbix/enc:/var/lib/zabbix/enc:ro
+      - /swarm/volumes/zabbix/ssh_keys:/var/lib/zabbix/ssh_keys:ro      
+    environment:  
+      ZBX_SERVER_HOST: zabbix-server
+      ZBX_HOSTNAME: zabbix-server
+    depends_on:
+      - mysql-server
+      - zabbix-server

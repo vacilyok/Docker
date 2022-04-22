@@ -1,0 +1,10 @@
+docker service create \
+--name stand-resource \
+--replicas 2 \
+--publish published=8082,target=80 \
+--mount type=bind,src=/swarm/volumes/nginx/stand-resource/html,dst=/usr/share/nginx/html  \
+--mount type=bind,src=/swarm/volumes/nginx/stand-resource/nginx.conf,dst=/etc/nginx/nginx.conf \
+nginx
+
+
+

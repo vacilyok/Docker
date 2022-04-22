@@ -1,0 +1,13 @@
+docker service create \
+--name portainer \
+--replicas 1 \
+--publish published=9111,target=9000 \
+--mount type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock  \
+--mount type=bind,src=/swarm/volumes/portainer,dst=/data  \
+--constraint node.role==manager \
+portainer/portainer
+
+
+
+
+
